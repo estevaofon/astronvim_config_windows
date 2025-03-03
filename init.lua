@@ -98,8 +98,39 @@ require("dap").configurations.python = {
   },
 }
 
+vim.keymap.set("n", "<F2>", ":bp<CR>", { desc = "Previous Breakpoint" })
+vim.keymap.set("n", "<F3>", ":bn<CR>", { desc = "Next Breakpoint" })
 vim.keymap.set("n", "<F12>", require("dap").step_into, { desc = "Step Into Function" })
 vim.keymap.set("n", "<F6>", require("dap").terminate, { desc = "Stop Debugging" })
+
+function _G.safe_bdelete(buf)
+  local buf_to_delete = buf or vim.api.nvim_get_current_buf()
+  local bufs = vim.fn.getbufinfo { buflisted = 1 }
+  if #bufs == 1 then
+    -- Se houver apenas um buffer listado, cria um novo buffer vazio
+    vim.cmd "enew"
+  else
+    -- Se existir um buffer alternativo (diferente do que vamos fechar), muda para ele
+    local alt_buf = vim.fn.bufnr "#"
+    if alt_buf > 0 and alt_buf ~= buf_to_delete then
+      vim.cmd "buffer #"
+    else
+      -- Caso não haja um buffer alternativo válido, alterna para o buffer anterior
+      vim.cmd "bprevious"
+    end
+  end
+  -- Deleta o buffer que originalmente estava ativo (ou o passado como argumento)
+  vim.cmd("bdelete " .. buf_to_delete)
+end
+
+vim.api.nvim_set_keymap("n", "<leader>bd", ":lua safe_bdelete()<CR>", { noremap = true, silent = true })
+
+function _G.close_all_buffers()
+  vim.cmd "silent! %bdelete"
+  vim.cmd "Neotree toggle"
+end
+
+vim.api.nvim_set_keymap("n", "<leader>ba", ":lua close_all_buffers()<CR>", { noremap = true, silent = true })
 
 -- Disable the default Tab mapping for Copilot and remap its accept action.
 vim.g.copilot_no_tab_map = true
@@ -130,80 +161,6 @@ set_python_env()
 
 -- Use the environment variable HOME if available; otherwise, use USERPROFILE (common on Windows)
 local HOME = os.getenv "HOME" or os.getenv "USERPROFILE"
-
--- local M = {}
--- M.store_breakpoints = function(clear)
---   local dap_cache_dir = vim.fn.stdpath "cache" .. path_sep .. "dap"
---   vim.fn.mkdir(dap_cache_dir, "p")
---   local breakpoints_file = dap_cache_dir .. path_sep .. "breakpoints.json"
---
---   if vim.fn.filereadable(breakpoints_file) == 0 then
---     local f = io.open(breakpoints_file, "w")
---     f:write "{}"
---     f:close()
---   end
---
---   local load_bps_raw = io.open(breakpoints_file, "r"):read "*a"
---   if load_bps_raw == "" then load_bps_raw = "{}" end
---
---   local bps = vim.fn.json_decode(load_bps_raw)
---   local breakpoints_by_buf = require("dap.breakpoints").get()
---   if clear then
---     for _, bufrn in ipairs(vim.api.nvim_list_bufs()) do
---       local file_path = vim.api.nvim_buf_get_name(bufrn)
---       if bps[file_path] ~= nil then bps[file_path] = {} end
---     end
---   else
---     for buf, buf_bps in pairs(breakpoints_by_buf) do
---       bps[vim.api.nvim_buf_get_name(buf)] = buf_bps
---     end
---   end
---   local fp = io.open(breakpoints_file, "w")
---   local final = vim.fn.json_encode(bps)
---   fp:write(final)
---   fp:close()
--- end
---
--- M.load_breakpoints = function()
---   local dap_cache_dir = vim.fn.stdpath "cache" .. path_sep .. "dap"
---   local breakpoints_file = dap_cache_dir .. path_sep .. "breakpoints.json"
---   local fp = io.open(breakpoints_file, "r")
---   if fp == nil then
---     print "No breakpoints found."
---     return
---   end
---   local content = fp:read "*a"
---   local bps = vim.fn.json_decode(content)
---   local loaded_buffers = {}
---   local found = false
---   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
---     local file_name = vim.api.nvim_buf_get_name(buf)
---     if bps[file_name] ~= nil and next(bps[file_name]) then found = true end
---     loaded_buffers[file_name] = buf
---   end
---   if not found then return end
---   for path, buf_bps in pairs(bps) do
---     for _, bp in pairs(buf_bps) do
---       local line = bp.line
---       local opts = {
---         condition = bp.condition,
---         log_message = bp.logMessage,
---         hit_condition = bp.hitCondition,
---       }
---       require("dap.breakpoints").set(opts, tonumber(loaded_buffers[path]), line)
---     end
---   end
--- end
---
--- local dap_breakpoints = M
-
--- vim.api.nvim_create_autocmd("VimEnter", {
---   callback = function() dap_breakpoints.load_breakpoints() end,
--- })
---
--- vim.api.nvim_create_autocmd("VimLeavePre", {
---   callback = function() dap_breakpoints.store_breakpoints(false) end,
--- })
 
 vim.api.nvim_set_keymap("n", "<leader>fg", ":Telescope live_grep<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "<leader>lg", ":Telescope live_grep<CR>", { noremap = true, silent = true })
@@ -239,6 +196,9 @@ dapui.setup {
   auto_open = true,
   auto_close = false,
 }
+
+-- Eval var under cursor
+vim.keymap.set("n", "<F1>", function() require("dapui").eval(nil, { enter = true }) end)
 
 local dap = require "dap"
 dap.listeners.before.event_terminated["dapui_config"] = function() end
@@ -281,8 +241,6 @@ vim.keymap.set(
   { silent = true }
 )
 
-local dap = require "dap"
-
 vim.api.nvim_set_keymap("n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", { noremap = true, silent = true })
 
@@ -305,8 +263,6 @@ if vim.loop.os_uname().sysname == "Windows_NT" then
   vim.opt.shellquote = ""
   vim.opt.shellxquote = ""
 end
-
--- require("nvim-dap-virtual-text").setup()
 
 require("nvim-dap-virtual-text").setup {
   enabled = true, -- enable this plugin (the default)
@@ -350,3 +306,115 @@ dap.listeners.after.event_initialized["disable_diagnostics"] = function() vim.di
 dap.listeners.before.event_terminated["enable_diagnostics"] = function() vim.diagnostic.enable() end
 
 dap.listeners.before.event_exited["enable_diagnostics"] = function() vim.diagnostic.enable() end
+
+dap.listeners.after.event_stopped["store_frame_id"] = function(session, event)
+  session:request("stackTrace", { threadId = event.threadId, startFrame = 0, levels = 1 }, function(err, response)
+    if not err and response and response.stackFrames and #response.stackFrames > 0 then
+      vim.g.current_frame_id = response.stackFrames[1].id
+      print("Stored current frame id: " .. vim.g.current_frame_id)
+    end
+  end)
+end
+
+local function evaluate_expr(session, expr, frameId, callback)
+  session:request("evaluate", { expression = expr, context = "hover", frameId = frameId }, callback)
+end
+
+local function fallback_evaluate(session, expr, callback)
+  session:request("threads", {}, function(err, threads_response)
+    if err then
+      print("Error getting threads: " .. (err.message or "unknown error"))
+      return
+    end
+    if threads_response and threads_response.threads and #threads_response.threads > 0 then
+      local threadId = threads_response.threads[1].id
+      session:request("stackTrace", { threadId = threadId, startFrame = 0, levels = 1 }, function(err, stack_response)
+        if err then
+          print("Error getting stack trace: " .. (err.message or "unknown error"))
+          return
+        end
+        if stack_response and stack_response.stackFrames and #stack_response.stackFrames > 0 then
+          local newFrameId = stack_response.stackFrames[1].id
+          print("Fallback: got frame id " .. newFrameId)
+          evaluate_expr(session, expr, newFrameId, callback)
+        else
+          print "No stack frames available"
+        end
+      end)
+    else
+      print "No threads available"
+    end
+  end)
+end
+
+local function copy_variable_value()
+  print "copy_variable_value triggered"
+
+  local expr = vim.fn.expand "<cword>"
+  print("Variable under cursor: " .. expr)
+  if expr == "" then
+    print "No variable found under cursor"
+    return
+  end
+
+  local session = dap.session()
+  if not session then
+    print "No active debug session"
+    return
+  else
+    print "Active debug session found"
+  end
+
+  -- Use JSON serialization without indenting so the output is a single line.
+  -- local wrapped_expr = string.format('__import__("json").dumps(%s, default=str, ensure_ascii=False)', expr)
+  local wrapped_expr = string.format("repr(%s)", expr)
+  print("Evaluating: " .. wrapped_expr)
+
+  local function handle_evaluation(err, response)
+    if err then
+      print("Error evaluating variable: " .. (err.message or "unknown error"))
+      return
+    end
+    if not response or not response.result then
+      print("No result returned for variable: " .. expr)
+      return
+    end
+
+    local result = response.result
+    print("Raw evaluation result: " .. result)
+
+    -- Remove any literal "\n" sequences and actual newline characters.
+    result = result:gsub("\\n", "") -- removes literal \n
+    result = result:gsub("\n", "") -- removes actual newline characters
+
+    -- Remove surrounding quotes (both double and single) if they exist.
+    result = result:gsub('^"(.*)"$', "%1")
+    result = result:gsub("^'(.*)'$", "%1")
+
+    -- Write the processed result into a new scratch buffer.
+    vim.cmd "enew"
+    vim.bo.buftype = "nofile"
+    vim.bo.bufhidden = "wipe"
+    vim.bo.swapfile = false
+
+    vim.api.nvim_buf_set_lines(0, 0, -1, false, { result })
+    vim.cmd "setlocal filetype=txt"
+  end
+
+  local frameId = vim.g.current_frame_id
+  if frameId then
+    evaluate_expr(session, wrapped_expr, frameId, function(err, response)
+      if err then
+        print("Error evaluating with stored frame id: " .. (err.message or "unknown error"))
+        fallback_evaluate(session, wrapped_expr, handle_evaluation)
+      else
+        handle_evaluation(err, response)
+      end
+    end)
+  else
+    print "No frame id stored; trying fallback evaluation"
+    fallback_evaluate(session, wrapped_expr, handle_evaluation)
+  end
+end
+
+vim.keymap.set("n", "<F8>", copy_variable_value, { silent = false, desc = "Copy variable value to new buffer" })
