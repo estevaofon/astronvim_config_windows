@@ -98,6 +98,17 @@ require("dap").configurations.python = {
   },
 }
 
+require("persistent-breakpoints").setup {
+  load_breakpoints_event = { "BufReadPost" },
+}
+
+local opts = { noremap = true, silent = true }
+local keymap = vim.api.nvim_set_keymap
+-- Save breakpoints to file automatically.
+-- Delete F9 keymap to avoid conflicts with persistent-breakpoints.
+vim.keymap.del("n", "<F9>")
+keymap("n", "<F9>", "<cmd>lua require('persistent-breakpoints.api').toggle_breakpoint()<cr>", opts)
+
 vim.keymap.set("n", "<F2>", ":bp<CR>", { desc = "Previous Breakpoint" })
 vim.keymap.set("n", "<F3>", ":bn<CR>", { desc = "Next Breakpoint" })
 vim.keymap.set("n", "<F12>", require("dap").step_into, { desc = "Step Into Function" })
@@ -418,3 +429,7 @@ local function copy_variable_value()
 end
 
 vim.keymap.set("n", "<F8>", copy_variable_value, { silent = false, desc = "Copy variable value to new buffer" })
+
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  callback = function() require("persistent-breakpoints.api").reload_breakpoints() end,
+})
