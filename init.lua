@@ -116,7 +116,6 @@ require("dap").configurations.python = {
       "--log-cli-level=INFO", -- log level (optional)
       "--no-header", -- Suppress header output
       "--no-summary", -- Suppress summary output
-      "-q",
     },
     console = "integratedTerminal",
     cwd = vim.fn.getcwd(),
@@ -443,6 +442,21 @@ local function copy_variable_value()
     vim.bo.buftype = "nofile"
     vim.bo.bufhidden = "wipe"
     vim.bo.swapfile = false
+
+    -- Save to a file on the desktop.
+    local temp_file = "D:\\OneDrive\\Desktop\\variable_value.txt"
+    local file = io.open(temp_file, "w")
+    file:write(result)
+    file:close()
+
+    -- Call the internal program: json-to-dict
+    local command = 'json-to-dict -i "D:\\OneDrive\\Desktop\\variable_value.txt" -o "D:\\OneDrive\\Desktop\\temp.txt"'
+    local success = os.execute(command)
+    if success then
+      print "json-to-dict command executed successfully"
+    else
+      print "Failed to execute json-to-dict command"
+    end
 
     vim.api.nvim_buf_set_lines(0, 0, -1, false, { result })
     vim.cmd "setlocal filetype=json"
