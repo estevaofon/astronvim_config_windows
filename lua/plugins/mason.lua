@@ -59,4 +59,7 @@ return {
   {
     "tpope/vim-fugitive",
   },
+  {
+    "estevaofon/regexescape",
+  },
 }

@@ -36,18 +36,44 @@ require "polish"
 vim.cmd.colorscheme "catppuccin-mocha"
 -- vim.cmd.colorscheme "tokyonight-night"
 
-local lspconfig = require "lspconfig"
-lspconfig.pylsp.setup {
-  settings = {
-    pylsp = {
-      plugins = {
-        pycodestyle = {
-          ignore = { "E501", "E126", "E127", "W391" },
-        },
-      },
+-- local lspconfig = require "lspconfig"
+-- lspconfig.pylsp.setup {
+--   settings = {
+--     pylsp = {
+--       plugins = {
+--         pycodestyle = {
+--           ignore = { "E501", "E126", "E127", "W391" },
+--         },
+--       },
+--     },
+--   },
+-- }
+
+-- Define a global config variable
+_G.my_pylsp_config = {
+  pylsp = {
+    plugins = {
+      pycodestyle = { ignore = { "E501", "E126", "E127", "W391" } },
+      pyflakes = { enabled = true }, -- initial state
     },
   },
 }
+
+local lspconfig = require "lspconfig"
+lspconfig.pylsp.setup {
+  settings = _G.my_pylsp_config,
+}
+
+-- Create a command to toggle pyflakes and restart the server
+vim.api.nvim_create_user_command("TogglePyflakes", function()
+  -- Toggle the pyflakes setting in the global config
+  _G.my_pylsp_config.pylsp.plugins.pyflakes.enabled = not _G.my_pylsp_config.pylsp.plugins.pyflakes.enabled
+
+  print("Pyflakes is now " .. (_G.my_pylsp_config.pylsp.plugins.pyflakes.enabled and "enabled" or "disabled"))
+
+  -- Restart the server so it picks up the updated config
+  vim.cmd "LspRestart"
+end, {})
 
 local function get_local_debugpy()
   local cwd = vim.fn.getcwd()
@@ -88,11 +114,14 @@ require("dap").configurations.python = {
       "${file}",
       "-sv", -- show output
       "--log-cli-level=INFO", -- log level (optional)
+      "--no-header", -- Suppress header output
+      "--no-summary", -- Suppress summary output
+      "-q",
     },
     console = "integratedTerminal",
     cwd = vim.fn.getcwd(),
-    justMyCode = false, -- debugger will step into libraries if needed
-    subProcess = true,
+    justMyCode = true, -- debugger will step into libraries if needed
+    subProcess = false,
     pythonPath = get_local_debugpy,
   },
 }
@@ -171,6 +200,21 @@ set_python_env()
 
 -- Use the environment variable HOME if available; otherwise, use USERPROFILE (common on Windows)
 local HOME = os.getenv "HOME" or os.getenv "USERPROFILE"
+
+require("telescope").setup {
+  defaults = {
+    vimgrep_arguments = {
+      "rg",
+      "--color=never",
+      "--no-heading",
+      "--with-filename",
+      "--line-number",
+      "--column",
+      "--fixed-strings", -- This flag makes ripgrep treat the pattern as a literal string.
+      "--smart-case",
+    },
+  },
+}
 
 vim.api.nvim_set_keymap("n", "<leader>fg", ":Telescope live_grep<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "<leader>lg", ":Telescope live_grep<CR>", { noremap = true, silent = true })
@@ -377,9 +421,8 @@ local function copy_variable_value()
     print "Active debug session found"
   end
 
-  -- Use JSON serialization without indenting so the output is a single line.
-  -- local wrapped_expr = string.format('__import__("json").dumps(%s, default=str, ensure_ascii=False)', expr)
-  local wrapped_expr = string.format("repr(%s)", expr)
+  -- Use JSON serialization so that the output is a valid JSON string.
+  local wrapped_expr = string.format('__import__("json").dumps(%s, default=str, ensure_ascii=False)', expr)
   print("Evaluating: " .. wrapped_expr)
 
   local function handle_evaluation(err, response)
@@ -395,22 +438,14 @@ local function copy_variable_value()
     local result = response.result
     print("Raw evaluation result: " .. result)
 
-    -- Remove any literal "\n" sequences and actual newline characters.
-    result = result:gsub("\\n", "") -- removes literal \n
-    result = result:gsub("\n", "") -- removes actual newline characters
-
-    -- Remove surrounding quotes (both double and single) if they exist.
-    result = result:gsub('^"(.*)"$', "%1")
-    result = result:gsub("^'(.*)'$", "%1")
-
-    -- Write the processed result into a new scratch buffer.
+    -- Write the JSON string into a new scratch buffer.
     vim.cmd "enew"
     vim.bo.buftype = "nofile"
     vim.bo.bufhidden = "wipe"
     vim.bo.swapfile = false
 
     vim.api.nvim_buf_set_lines(0, 0, -1, false, { result })
-    vim.cmd "setlocal filetype=txt"
+    vim.cmd "setlocal filetype=json"
   end
 
   local frameId = vim.g.current_frame_id
@@ -456,3 +491,7 @@ vim.api.nvim_create_user_command("LiteralSearch", literal_search_prompt, {})
 
 -- Optionally, map a key (here <leader>ls) to invoke the prompt
 vim.api.nvim_set_keymap("n", "<leader>ls", ":LiteralSearch<CR>", { noremap = true, silent = true })
+
+require("regexescape").setup {
+  keymap = "<leader>e", -- change as desired
+}
