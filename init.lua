@@ -509,3 +509,89 @@ vim.api.nvim_set_keymap("n", "<leader>ls", ":LiteralSearch<CR>", { noremap = tru
 require("regexescape").setup {
   keymap = "<leader>e", -- change as desired
 }
+
+function format_python_or_json()
+  -- Get the start and end lines of the visual selection.
+  local start_line = vim.fn.line "'<"
+  local end_line = vim.fn.line "'>"
+  local lines = vim.api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
+  local text = table.concat(lines, "\n")
+
+  -- Locate the first balanced literal enclosed in {}.
+  local literal_start, literal_end = text:find "(%b{})"
+  if not literal_start then
+    print "Could not extract a literal (dict or JSON) from selection"
+    return
+  end
+
+  local literal = text:sub(literal_start, literal_end)
+  local prefix = text:sub(1, literal_start - 1)
+  local suffix = text:sub(literal_end + 1)
+
+  -- Try formatting as JSON first.
+  local formatted = vim.fn.system("python -m json.tool", literal)
+  if vim.v.shell_error ~= 0 then
+    -- Fall back to formatting as a Python dict.
+    formatted = vim.fn.system(
+      'python -c "import ast, pprint, sys; d = ast.literal_eval(sys.stdin.read()); pprint.pprint(d)"',
+      literal
+    )
+    if vim.v.shell_error ~= 0 then
+      print "Error formatting input. Is Python installed and is the literal valid?"
+      return
+    end
+  end
+
+  local formatted_lines = vim.split(formatted, "\n", { trimempty = true })
+  if #formatted_lines == 0 then return end
+
+  local new_text_lines = {}
+
+  if prefix:match "%S" then
+    -- CASE 1: There is a non-whitespace prefix (e.g. a variable assignment).
+    local prefix_lines = vim.split(prefix, "\n", { trimempty = false })
+    local assignment_line = prefix_lines[#prefix_lines] or ""
+    assignment_line = assignment_line:gsub("%s+$", "") -- trim trailing whitespace
+
+    local rest_pre = {}
+    if #prefix_lines > 1 then
+      for i = 1, #prefix_lines - 1 do
+        table.insert(rest_pre, prefix_lines[i])
+      end
+    end
+
+    -- Set indent based on the assignment line's length.
+    local indent = string.rep(" ", #assignment_line + 1)
+
+    -- Add any prefix lines except the assignment.
+    for _, l in ipairs(rest_pre) do
+      table.insert(new_text_lines, l)
+    end
+
+    -- Join the assignment and the first line of the formatted literal.
+    local first_line = assignment_line .. " " .. formatted_lines[1]
+    table.insert(new_text_lines, first_line)
+
+    -- Append the remaining formatted lines, indented.
+    for i = 2, #formatted_lines do
+      table.insert(new_text_lines, indent .. formatted_lines[i])
+    end
+  else
+    -- CASE 2: No non-whitespace prefix; preserve the original left indentation.
+    local original_indent = text:match "^(%s*)" or ""
+    for _, line in ipairs(formatted_lines) do
+      table.insert(new_text_lines, original_indent .. line)
+    end
+  end
+
+  -- Append any suffix (if present) to the last line.
+  if suffix and suffix:match "%S" then
+    local suffix_trimmed = suffix:gsub("^%s+", "")
+    new_text_lines[#new_text_lines] = new_text_lines[#new_text_lines] .. " " .. suffix_trimmed
+  end
+
+  vim.api.nvim_buf_set_lines(0, start_line - 1, end_line, false, new_text_lines)
+end
+
+-- Map the unified formatter to <leader>p in visual mode.
+vim.api.nvim_set_keymap("v", "<leader>p", ":lua format_python_or_json()<CR>", { noremap = true, silent = true })
