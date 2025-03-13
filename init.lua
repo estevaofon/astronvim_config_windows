@@ -595,3 +595,30 @@ end
 
 -- Map the unified formatter to <leader>p in visual mode.
 vim.api.nvim_set_keymap("v", "<leader>p", ":lua format_python_or_json()<CR>", { noremap = true, silent = true })
+
+require("toggleterm").setup {
+  direction = "vertical", -- this makes the terminal open vertically
+  size = 80, -- adjust the width as needed
+}
+
+-- Define a Lua function to clear all breakpoints using nvim-dap
+function clear_all_breakpoints()
+  require("dap").clear_breakpoints()
+  print "All breakpoints cleared!"
+end
+
+-- Optional: Map the function to a key combination (here, <Leader>cb)
+vim.api.nvim_set_keymap("n", "<Leader>cb", ":lua clear_all_breakpoints()<CR>", { noremap = true, silent = true })
+
+-- Optional: Create a command to run the function from the command line
+vim.cmd "command! ClearBreakpoints lua clear_all_breakpoints()"
+
+function invert_slashes()
+  local line = vim.api.nvim_get_current_line()
+  -- Replace all occurrences of "/" with "\"
+  local new_line = line:gsub("/", "\\")
+  vim.api.nvim_set_current_line(new_line)
+end
+
+-- Map the function to <leader>is in normal mode
+vim.api.nvim_set_keymap("n", "<leader>is", "<cmd>lua invert_slashes()<CR>", { noremap = true, silent = true })
