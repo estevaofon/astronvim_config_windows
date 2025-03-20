@@ -102,7 +102,7 @@ require("dap").configurations.python = {
     type = "python",
     request = "launch",
     program = "${file}", -- This runs the current file directly
-    justMyCode = true,
+    justMyCode = false,
     pythonPath = get_local_debugpy,
   },
   {
@@ -117,7 +117,7 @@ require("dap").configurations.python = {
     },
     console = "integratedTerminal",
     cwd = vim.fn.getcwd(),
-    justMyCode = true, -- debugger will step into libraries if needed
+    justMyCode = false, -- debugger will step into libraries if needed
     subProcess = false,
     pythonPath = get_local_debugpy,
   },
@@ -776,3 +776,33 @@ end
 
 -- Mapeamento de atalho para a função em modo visual (exemplo: <leader>be)
 vim.api.nvim_set_keymap("v", "<leader>be", ":lua EncodeBase64VisualSelection()<CR>", { noremap = true, silent = true })
+
+-- Completely disable nvim-treesitter for the current session.
+-- Completely disable Treesitter and nvim-ts-autotag for the current session.
+function DisableTreesitter()
+  -- Destroy any active Treesitter parsers in all buffers.
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
+    if ok and parser then parser:destroy() end
+  end
+
+  -- Override core Treesitter functions to prevent reinitialization.
+  vim.treesitter.get_parser = function() return nil end
+  vim.treesitter.start = function() end
+  vim.treesitter.stop = function() end
+  vim.treesitter.invalidate = function() end
+  vim.treesitter.parse_query = function() end
+
+  -- Remove the nvim-ts-autotag autocommand group, if it exists.
+  local success, err = pcall(vim.api.nvim_del_augroup_by_name, "nvim-ts-autotag")
+  if not success then
+    -- If the group doesn't exist, nothing to do.
+  end
+
+  -- Optionally unload the autotag module if it is already loaded.
+  if package.loaded["nvim-ts-autotag"] then package.loaded["nvim-ts-autotag"] = nil end
+
+  -- Re-enable Vim's native syntax highlighting.
+  vim.cmd "syntax enable"
+  print "Treesitter and nvim-ts-autotag have been completely disabled for this session."
+end
