@@ -53,7 +53,7 @@ vim.cmd.colorscheme "catppuccin-mocha"
 _G.my_pylsp_config = {
   pylsp = {
     plugins = {
-      pycodestyle = { ignore = { "E501", "E126", "E127", "W391" } },
+      pycodestyle = { ignore = { "E501", "E126", "E127", "W391", "W504" } },
       pyflakes = { enabled = true }, -- initial state
     },
   },
@@ -139,11 +139,7 @@ local function check_debugpy_installed()
   return true
 end
 
--- Call the function to check debugpy when needed
-if not check_debugpy_installed() then
-  -- Optionally, you can disable further DAP configuration or add fallback logic here.
-  return
-end
+check_debugpy_installed()
 
 require("persistent-breakpoints").setup {
   load_breakpoints_event = { "BufReadPost" },
@@ -156,7 +152,6 @@ local keymap = vim.api.nvim_set_keymap
 vim.keymap.del("n", "<F9>")
 keymap("n", "<F9>", "<cmd>lua require('persistent-breakpoints.api').toggle_breakpoint()<cr>", opts)
 
-vim.keymap.set("n", "<F2>", ":bp<CR>", { desc = "Previous Breakpoint" })
 vim.keymap.set("n", "<F3>", ":bn<CR>", { desc = "Next Breakpoint" })
 vim.keymap.set("n", "<F12>", require("dap").step_into, { desc = "Step Into Function" })
 vim.keymap.set("n", "<F6>", require("dap").terminate, { desc = "Stop Debugging" })
@@ -192,7 +187,7 @@ vim.api.nvim_set_keymap("n", "<leader>ba", ":lua close_all_buffers()<CR>", { nor
 
 -- Disable the default Tab mapping for Copilot and remap its accept action.
 vim.g.copilot_no_tab_map = true
-vim.api.nvim_set_keymap("i", "<C-l>", 'copilot#Accept("<CR>")', { expr = true, silent = true })
+vim.api.nvim_set_keymap("i", "<C-l>", "copilot#Accept('<CR>')", { expr = true, silent = true })
 vim.api.nvim_set_keymap("n", "<leader>a", ":lua print(vim.fn.expand('%:p'))<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>gp", ":GitSigns preview_hunk<CR>", {})
 
@@ -296,7 +291,6 @@ vim.keymap.set(
   { desc = "Dismiss all notifications" }
 )
 
-vim.keymap.set({ "n", "x" }, "<leader>c", ":s/^\\(\\s*\\)/\\1# /<CR>", { silent = true })
 vim.keymap.del("n", "<C-q>")
 vim.api.nvim_set_keymap("n", "<C-q>", "<C-v>", { noremap = true, silent = true })
 
@@ -776,33 +770,4 @@ end
 
 -- Mapeamento de atalho para a função em modo visual (exemplo: <leader>be)
 vim.api.nvim_set_keymap("v", "<leader>be", ":lua EncodeBase64VisualSelection()<CR>", { noremap = true, silent = true })
-
--- Completely disable nvim-treesitter for the current session.
--- Completely disable Treesitter and nvim-ts-autotag for the current session.
-function DisableTreesitter()
-  -- Destroy any active Treesitter parsers in all buffers.
-  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-    local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
-    if ok and parser then parser:destroy() end
-  end
-
-  -- Override core Treesitter functions to prevent reinitialization.
-  vim.treesitter.get_parser = function() return nil end
-  vim.treesitter.start = function() end
-  vim.treesitter.stop = function() end
-  vim.treesitter.invalidate = function() end
-  vim.treesitter.parse_query = function() end
-
-  -- Remove the nvim-ts-autotag autocommand group, if it exists.
-  local success, err = pcall(vim.api.nvim_del_augroup_by_name, "nvim-ts-autotag")
-  if not success then
-    -- If the group doesn't exist, nothing to do.
-  end
-
-  -- Optionally unload the autotag module if it is already loaded.
-  if package.loaded["nvim-ts-autotag"] then package.loaded["nvim-ts-autotag"] = nil end
-
-  -- Re-enable Vim's native syntax highlighting.
-  vim.cmd "syntax enable"
-  print "Treesitter and nvim-ts-autotag have been completely disabled for this session."
-end
+vim.api.nvim_set_keymap("i", "<C-d>", "copilot#Accept('<CR>')", { expr = true, silent = true })
