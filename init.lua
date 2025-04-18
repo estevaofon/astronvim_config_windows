@@ -97,29 +97,9 @@ vim.api.nvim_create_autocmd("BufWinEnter", {
   callback = function() require("persistent-breakpoints.api").reload_breakpoints() end,
 })
 
-require("regexescape").setup {
-  keymap = "<leader>e", -- change as desired
-}
-
-require("toggleterm").setup {
-  direction = "vertical", -- this makes the terminal open vertically
-  size = 80, -- adjust the width as needed
-}
 -- In your init.lua, add this line where you want to set up the base64 functionality
-require("base64").setup()
-require("search").setup()
-require("json_utils").setup()
-require("debugger").setup()
-require("my_utils").setup()
-
-_G.search_replace_prompt = require("search").search_replace_prompt
-_G.literal_search_prompt = require("search").literal_search_prompt
-
--- Create a user command for convenience
-vim.api.nvim_create_user_command("LiteralSearch", _G.literal_search_prompt, {})
--- Optionally, map a key (here <leader>ls) to invoke the prompt
-vim.api.nvim_set_keymap("n", "<leader>ls", ":LiteralSearch<CR>", { noremap = true, silent = true })
-
-vim.api.nvim_create_user_command("SearchReplace", _G.search_replace_prompt, {})
-
-vim.keymap.set("n", "<leader>sr", _G.search_replace_prompt, { desc = "Search and Replace" })
+require("utils.base64").setup()
+require("utils.search").setup()
+require("utils.json_utils").setup()
+require("utils.debugger").setup()
+require("utils.my_utils").setup()

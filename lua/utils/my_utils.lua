@@ -82,6 +82,11 @@ function M.setup()
     ":lua require('utils').close_all_buffers()<CR>",
     { noremap = true, silent = true }
   )
+
+  require("toggleterm").setup {
+    direction = "vertical", -- this makes the terminal open vertically
+    size = 80, -- adjust the width as needed
+  }
 end
 
 -- Define a function to clear all breakpoints using nvim-dap

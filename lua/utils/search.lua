@@ -39,6 +39,13 @@ end
 function M.setup()
   -- Create a user command for literal search
   vim.api.nvim_create_user_command("LiteralSearch", M.literal_search_prompt, {})
+  -- Create a user command for convenience
+  -- Optionally, map a key (here <leader>ls) to invoke the prompt
+  vim.api.nvim_set_keymap("n", "<leader>ls", ":LiteralSearch<CR>", { noremap = true, silent = true })
+
+  vim.api.nvim_create_user_command("SearchReplace", M.search_replace_prompt, {})
+
+  vim.keymap.set("n", "<leader>sr", M.search_replace_prompt, { desc = "Search and Replace" })
 end
 
 return M
