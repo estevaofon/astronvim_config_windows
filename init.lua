@@ -51,16 +51,22 @@ lspconfig.pylsp.setup {
   settings = _G.my_pylsp_config,
 }
 
-require("persistent-breakpoints").setup {
-  load_breakpoints_event = { "BufReadPost" },
-}
+-- require("persistent-breakpoints").setup {
+--   load_breakpoints_event = { "BufReadPost" },
+-- }
 
 local opts = { noremap = true, silent = true }
 local keymap = vim.api.nvim_set_keymap
 -- Save breakpoints to file automatically.
 -- Delete F9 keymap to avoid conflicts with persistent-breakpoints.
 vim.keymap.del("n", "<F9>")
-keymap("n", "<F9>", "<cmd>lua require('persistent-breakpoints.api').toggle_breakpoint()<cr>", opts)
+-- keymap("n", "<F9>", "<cmd>lua require('persistent-breakpoints.api').toggle_breakpoint()<cr>", opts)
+vim.keymap.set(
+  "n",
+  "<F9>",
+  function() require("dap").toggle_breakpoint() end,
+  { noremap = true, silent = true, desc = "Toggle breakpoint" }
+)
 
 vim.keymap.set("n", "<F3>", ":bn<CR>", { desc = "Next Breakpoint" })
 vim.keymap.set("n", "<F12>", require("dap").step_into, { desc = "Step Into Function" })
@@ -92,10 +98,6 @@ vim.api.nvim_set_keymap("n", "<C-q>", "<C-v>", { noremap = true, silent = true }
 
 vim.api.nvim_set_keymap("n", "gD", "<cmd>lua vim.lsp.buf.declaration()<CR>", { noremap = true, silent = true })
 vim.api.nvim_set_keymap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", { noremap = true, silent = true })
-
-vim.api.nvim_create_autocmd("BufWinEnter", {
-  callback = function() require("persistent-breakpoints.api").reload_breakpoints() end,
-})
 
 -- In your init.lua, add this line where you want to set up the base64 functionality
 require("utils.base64").setup()
