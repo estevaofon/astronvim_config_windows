@@ -103,5 +103,6 @@ vim.api.nvim_set_keymap("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", { no
 require("utils.base64").setup()
 require("utils.search").setup()
 require("utils.json_utils").setup()
+require("utils.python_path").setup()
 require("utils.debugger").setup()
 require("utils.my_utils").setup()
