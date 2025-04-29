@@ -1,4 +1,4 @@
--- utils.lua
+-- utils.my_utils.lua
 local M = {}
 
 function M.close_all_buffers()
@@ -64,22 +64,22 @@ function M.setup()
   vim.api.nvim_set_keymap(
     "n",
     "<Leader>cb",
-    ":lua require('utils').clear_all_breakpoints()<CR>",
+    ":lua require('utils.my_utils').clear_all_breakpoints()<CR>",
     { noremap = true, silent = true }
   )
   -- Create a command to run the breakpoint clearing function
-  vim.cmd "command! ClearBreakpoints lua require('utils').clear_all_breakpoints()"
+  vim.cmd "command! ClearBreakpoints lua require('utils.my_utils').clear_all_breakpoints()"
   -- Slash inversion keymap
   vim.api.nvim_set_keymap(
     "n",
     "<leader>is",
-    "<cmd>lua require('utils').invert_slashes()<CR>",
+    "<cmd>lua require('utils.my_utils').invert_slashes()<CR>",
     { noremap = true, silent = true }
   )
   vim.api.nvim_set_keymap(
     "n",
     "<leader>ba",
-    ":lua require('utils').close_all_buffers()<CR>",
+    ":lua require('utils.my_utils').close_all_buffers()<CR>",
     { noremap = true, silent = true }
   )
 
