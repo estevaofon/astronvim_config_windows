@@ -30,6 +30,7 @@ function M.set_python_path()
     -- We're in tcloud-monitors-api project
     local python_path = {
       "D:\\OneDrive\\Documentos\\TOTVS\\tcloud-monitors-api\\src",
+      "D:\\OneDrive\\Documentos\\TOTVS\\tcloud-monitors-api",
       "D:\\OneDrive\\Documentos\\TOTVS\\tcloud-codeartifact",
     }
 

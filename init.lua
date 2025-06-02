@@ -70,6 +70,8 @@ vim.keymap.set(
 
 vim.keymap.set("n", "<F3>", ":bn<CR>", { desc = "Next Breakpoint" })
 vim.keymap.set("n", "<F12>", require("dap").step_into, { desc = "Step Into Function" })
+-- Step out
+vim.keymap.set("n", "<F2>", require("dap").step_out, { desc = "Step Out of Function" })
 vim.keymap.set("n", "<F6>", require("dap").terminate, { desc = "Stop Debugging" })
 
 vim.api.nvim_set_keymap("n", "<leader>bd", ":lua safe_bdelete()<CR>", { noremap = true, silent = true })
