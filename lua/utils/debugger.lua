@@ -51,7 +51,7 @@ local function check_debugpy_installed()
   -- Attempt to import debugpy.
   local output = vim.fn.system(python .. ' -c "import debugpy"')
   if vim.v.shell_error ~= 0 then
-    vim.notify("debugpy is not installed in the environment (" .. python .. ")", vim.log.levels.INFO)
+    vim.notify("debugpy is not installed in the environment (" .. python .. ")", vim.log.levels.WARN)
     return false
   end
   return true
