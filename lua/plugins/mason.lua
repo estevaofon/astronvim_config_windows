@@ -60,6 +60,6 @@ return {
     "tpope/vim-fugitive",
   },
   {
-    "estevaofon/regexescape",
+    "estevaofon/ailite.nvim",
   },
 }

@@ -108,3 +108,6 @@ require("utils.json_utils").setup()
 require("utils.python_path").setup()
 require("utils.debugger").setup()
 require("utils.my_utils").setup()
+require("utils.markdown-preview").setup()
+-- require("utils.ailite_module.init").setup()
+require("ailite").setup {}
