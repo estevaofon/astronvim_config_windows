@@ -41,6 +41,18 @@ function M.set_python_path()
     vim.env.PYTHONPATH = path_str
     -- print "Set PYTHONPATH for tcloud-monitors-api project"
     vim.notify "Set PYTHONPATH for tcloud-monitors-api project"
+  elseif string.find(cwd_lower, "tcloud%-sentinela") then
+    -- We're in tcloud-sentinela project
+    local python_path = {
+      "D:\\OneDrive\\Documentos\\TOTVS\\tcloud-sentinela\\src",
+      "D:\\OneDrive\\Documentos\\TOTVS\\tcloud-sentinela",
+      "D:\\OneDrive\\Documentos\\TOTVS\\tcloud-codeartifact",
+    }
+    -- Convert to string with path separator
+    local path_str = table.concat(python_path, ";")
+    -- Set PYTHONPATH environment variable
+    vim.env.PYTHONPATH = path_str
+    vim.notify "Set PYTHONPATH for tcloud-sentinela project"
   else
     --[[ print "Not in a known project directory" ]]
     vim.notify "Not in a known project directory"

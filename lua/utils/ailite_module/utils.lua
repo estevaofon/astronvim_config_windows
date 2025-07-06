@@ -6,6 +6,18 @@ local M = {}
 -- Namespace for highlights
 M.ns_id = vim.api.nvim_create_namespace "ailite"
 
+-- Normalize file path to use forward slashes consistently
+function M.normalize_path(filepath)
+  if not filepath then return nil end
+  -- Replace backslashes with forward slashes
+  local normalized = filepath:gsub("\\", "/")
+  -- Get absolute path to handle relative paths consistently
+  normalized = vim.fn.fnamemodify(normalized, ":p")
+  -- Ensure forward slashes
+  normalized = normalized:gsub("\\", "/")
+  return normalized
+end
+
 -- Get visual selection
 function M.get_visual_selection()
   local start_pos = vim.fn.getpos "'<"
@@ -57,6 +69,10 @@ end
 
 -- Read file content
 function M.read_file(filepath)
+  -- Normalize path before reading
+  filepath = M.normalize_path(filepath)
+  if not filepath then return nil end
+
   local file = io.open(filepath, "r")
   if file then
     local content = file:read "*all"
@@ -83,6 +99,17 @@ function M.setup_highlights()
   vim.api.nvim_set_hl(0, "AiliteUser", { fg = "#61afef", bold = true })
   vim.api.nvim_set_hl(0, "AiliteAssistant", { fg = "#98c379", bold = true })
   vim.api.nvim_set_hl(0, "AilitePrompt", { fg = "#c678dd", bold = true })
+
+  -- Diff highlights - using standard diff colors
+  -- These will work with most color schemes
+  vim.api.nvim_set_hl(0, "AiliteDiffAdd", { link = "DiffAdd", default = true })
+  vim.api.nvim_set_hl(0, "AiliteDiffDelete", { link = "DiffDelete", default = true })
+  vim.api.nvim_set_hl(0, "AiliteDiffChange", { link = "DiffChange", default = true })
+
+  -- Fallback colors if DiffAdd/DiffDelete are not defined
+  if vim.fn.hlexists "DiffAdd" == 0 then vim.api.nvim_set_hl(0, "DiffAdd", { bg = "#1a3a1a", fg = "#98c379" }) end
+  if vim.fn.hlexists "DiffDelete" == 0 then vim.api.nvim_set_hl(0, "DiffDelete", { bg = "#3a1a1a", fg = "#e06c75" }) end
+  if vim.fn.hlexists "DiffChange" == 0 then vim.api.nvim_set_hl(0, "DiffChange", { fg = "#61afef", bold = true }) end
 end
 
 -- Get file extension
@@ -92,7 +119,14 @@ function M.get_file_extension(filepath) return vim.fn.fnamemodify(filepath, ":e"
 function M.get_file_name(filepath) return vim.fn.fnamemodify(filepath, ":t") end
 
 -- Get relative path
-function M.get_relative_path(filepath) return vim.fn.fnamemodify(filepath, ":~:.") end
+function M.get_relative_path(filepath)
+  -- Normalize path first
+  filepath = M.normalize_path(filepath)
+  if not filepath then return "" end
+  local relative = vim.fn.fnamemodify(filepath, ":~:.")
+  -- Ensure forward slashes in relative path too
+  return relative:gsub("\\", "/")
+end
 
 -- Split text into lines
 function M.split_lines(text)
@@ -117,6 +151,15 @@ function M.notify(message, level) vim.notify(message, level or vim.log.levels.IN
 function M.confirm(message, choices, default) return vim.fn.confirm(message, choices, default) end
 
 -- Get user input
-function M.input(prompt, default, completion) return vim.fn.input(prompt, default or "", completion) end
+function M.input(prompt, default, completion)
+  -- Build arguments table based on what's provided
+  local args = { prompt }
+
+  if default ~= nil or completion ~= nil then table.insert(args, default or "") end
+
+  if completion ~= nil then table.insert(args, completion) end
+
+  return vim.fn.input(unpack(args))
+end
 
 return M

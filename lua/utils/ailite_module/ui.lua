@@ -73,8 +73,8 @@ end
 
 -- Create diff window
 function M.create_diff_window(buf)
-  local width = 80
-  local height = 25
+  local width = math.min(100, math.floor(vim.o.columns * 0.8))
+  local height = math.min(35, math.floor(vim.o.lines * 0.8))
   local row = math.floor((vim.o.lines - height) / 2)
   local col = math.floor((vim.o.columns - width) / 2)
 
@@ -86,9 +86,16 @@ function M.create_diff_window(buf)
     height = height,
     border = "rounded",
     style = "minimal",
-    title = " Confirm Replacement ",
+    title = " 🔍 Diff Preview - Review Changes ",
     title_pos = "center",
   })
+
+  -- Set window options for better readability
+  vim.api.nvim_win_set_option(win, "wrap", false)
+  vim.api.nvim_win_set_option(win, "cursorline", true)
+  vim.api.nvim_win_set_option(win, "number", false)
+  vim.api.nvim_win_set_option(win, "relativenumber", false)
+  vim.api.nvim_win_set_option(win, "signcolumn", "no")
 
   return win
 end
@@ -146,10 +153,14 @@ end
 
 -- Show welcome message
 function M.show_welcome_message(buf)
-  local welcome_msg = [[
+  local cfg = config.get()
+  local assistant_name = cfg.assistant_name or "Claude"
+
+  local welcome_msg = string.format(
+    [[
 Welcome to Ailite! 🚀
 
-This is an interactive chat with Claude. Press 'i' to start a new message.
+This is an interactive chat with %s. Press 'i' to start a new message.
 
 Available commands:
   • i, o, a  - Start new message
@@ -159,7 +170,9 @@ Available commands:
   • c        - Clear chat
   • q        - Close chat
 
-Start by pressing 'i' to send your first message!]]
+Start by pressing 'i' to send your first message!]],
+    assistant_name
+  )
 
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
   local welcome_lines = utils.split_lines(welcome_msg)
@@ -202,8 +215,11 @@ end
 
 -- Show processing indicator
 function M.show_processing_indicator(buf)
+  local cfg = config.get()
+  local assistant_name = cfg.assistant_name or "Claude"
+
   vim.api.nvim_buf_set_option(buf, "modifiable", true)
-  vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "🤔 Claude is thinking" })
+  vim.api.nvim_buf_set_lines(buf, -1, -1, false, { "", "🤔 " .. assistant_name .. " is thinking" })
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
 end
 

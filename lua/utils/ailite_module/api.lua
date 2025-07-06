@@ -45,15 +45,18 @@ local function start_loading_animation(buf)
       local line_count = vim.api.nvim_buf_line_count(buf)
       local lines = vim.api.nvim_buf_get_lines(buf, line_count - 1, line_count, false)
 
+      -- Get assistant name from config
+      local cfg = config.get()
+      local assistant_name = cfg.assistant_name or "Claude"
+
       -- Only update if it's the loading line
-      -- No start_loading_animation, modifique a parte que atualiza o frame:
       if lines[1] and lines[1]:match "🤔" then
         vim.api.nvim_buf_set_lines(
           buf,
           line_count - 1,
           line_count,
           false,
-          { "🤔 Claude is thinking" .. animation_frames[animation_index] }
+          { "🤔 " .. assistant_name .. " is thinking" .. animation_frames[animation_index] }
         )
       end
       vim.api.nvim_buf_set_option(buf, "modifiable", false)
@@ -178,7 +181,7 @@ function M.call_api_async(messages, options, callback)
 
   if not cfg.api_key then
     utils.notify(
-      "API key not configured! Use :lua require('ailite').setup({api_key = 'your-key'})",
+      "API key not configured! Use :lua require('utils.ailite_module').setup({api_key = 'your-key'})",
       vim.log.levels.ERROR
     )
     callback(nil)
@@ -394,9 +397,9 @@ function M.debug()
         "1. Check if your API key is correct",
         "2. Verify you have credits in your Anthropic account",
         "3. Try setting the API key directly:",
-        "   :lua require('ailite').setup({api_key = 'sk-ant-...'})",
+        "   :lua require('utils.ailite_module').setup({api_key = 'sk-ant-...'})",
         "4. Check if the model name is correct:",
-        "   :lua require('ailite').setup({model = 'claude-3-5-sonnet-20241022'})",
+        "   :lua require('utils.ailite_module').setup({model = 'claude-3-5-sonnet-20241022'})",
         "5. Test with curl directly:",
         "   curl -X POST https://api.anthropic.com/v1/messages \\",
         "     -H 'x-api-key: YOUR_KEY' \\",
