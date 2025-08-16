@@ -109,12 +109,12 @@ require("utils.python_path").setup()
 require("utils.debugger").setup()
 require("utils.my_utils").setup()
 require("utils.markdown-preview").setup()
---
--- require("utils.ailite_module.init").setup {
---   assistant_name = "AiLite",
---   assistant_prefix = "AiLite: ",
--- }
+
 require("ailite").setup {
   assistant_name = "AiLite",
   assistant_prefix = "AiLite: ",
+  max_tokens = 8192,
+  context = {
+    max_tokens_per_message = 6000, -- ajuste o valor conforme necessário
+  },
 }

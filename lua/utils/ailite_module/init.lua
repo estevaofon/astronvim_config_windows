@@ -66,7 +66,7 @@ function M.create_commands()
   vim.api.nvim_create_user_command("AiliteDiffApply", function() code.apply_code_with_diff() end, {})
 
   vim.api.nvim_create_user_command("AiliteApplyCode", function()
-    local state = require "ailite.state"
+    local state = require "utils.ailite_module.state"
     if #state.plugin.code_blocks > 0 then
       code.show_code_preview(state.plugin.current_code_block or 1)
     else
@@ -184,13 +184,14 @@ function M.prompt_with_selection()
 
   -- Create prompt with selection context
   local prompt = string.format(
-    "About the selected code:\n```%s\n%s\n```\n\nWhat would you like to do with this code?",
+    "About the selected code:\n```%s\n%s\n```\n\nIn the next prompt I will ask you what to do with this code.\n\n",
     vim.bo.filetype,
     selection
   )
 
   chat.process_prompt(prompt)
 end
+
 -- Show plugin info
 function M.show_info()
   local config = require "utils.ailite_module.config"

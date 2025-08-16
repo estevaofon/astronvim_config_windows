@@ -42,10 +42,10 @@ function M.setup()
   }
 
   -- Create keymaps
-
   for _, map in ipairs(keymaps) do
     vim.keymap.set(map[1], map[2], map[3], { desc = map[4], noremap = true, silent = true })
   end
+
   -- Special handling for visual mode to preserve selection
   vim.keymap.set("x", "<leader>cp", ":<C-U>lua require('utils.ailite_module').prompt_with_selection()<CR>", {
     desc = "Ailite Prompt with Selection",

@@ -125,10 +125,14 @@ function M.clear_selected_files()
 end
 
 -- Get selected files content formatted
-function M.get_selected_files_content()
+function M.get_selected_files_content(files)
+  local state = require "utils.ailite_module.state"
+  local utils = require "utils.ailite_module.utils"
   local content = {}
 
-  for _, filepath in ipairs(state.plugin.selected_files) do
+  files = files or state.plugin.selected_files
+
+  for _, filepath in ipairs(files) do
     local file_content = utils.read_file(filepath)
     if file_content then
       local extension = utils.get_file_extension(filepath)

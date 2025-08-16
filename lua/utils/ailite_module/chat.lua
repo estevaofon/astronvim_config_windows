@@ -20,25 +20,57 @@ function M.start_input_mode()
 
   if not state.is_chat_valid() then return end
 
+  -- Check if there's an unsent prompt at the end of the buffer
+  local line_count = vim.api.nvim_buf_line_count(state.plugin.chat_buf)
+  local last_lines = vim.api.nvim_buf_get_lines(state.plugin.chat_buf, math.max(0, line_count - 10), line_count, false)
+
+  local cfg = config.get()
+  local prompt_line_idx = nil
+
+  -- Look for the prompt prefix in the last few lines
+  for i = #last_lines, 1, -1 do
+    if last_lines[i]:find("^" .. vim.pesc(cfg.chat_input_prefix)) then
+      prompt_line_idx = line_count - (#last_lines - i)
+      break
+    end
+  end
+
   -- Make buffer editable
   vim.api.nvim_buf_set_option(state.plugin.chat_buf, "modifiable", true)
   vim.api.nvim_buf_set_option(state.plugin.chat_buf, "readonly", false)
 
-  -- Add input prompt
-  local line_count = vim.api.nvim_buf_line_count(state.plugin.chat_buf)
-  local input_line = ui.add_input_prompt(state.plugin.chat_buf, line_count)
+  if prompt_line_idx and not state.plugin.last_prompt_was_sent then
+    -- Resume editing existing prompt
+    state.start_input_mode(prompt_line_idx - 1)
 
-  -- Mark input start
-  state.start_input_mode(input_line)
+    -- Move cursor to end of content
+    if state.is_chat_win_valid() then
+      local last_line = vim.api.nvim_buf_line_count(state.plugin.chat_buf)
+      local last_line_content = vim.api.nvim_buf_get_lines(state.plugin.chat_buf, last_line - 1, last_line, false)[1]
+        or ""
+      vim.api.nvim_win_set_cursor(state.plugin.chat_win, {
+        last_line,
+        #last_line_content,
+      })
+    end
+  else
+    -- Start new prompt
+    local input_line = ui.add_input_prompt(state.plugin.chat_buf, line_count)
 
-  -- Move cursor after prompt
-  if state.is_chat_win_valid() then
-    local cfg = config.get()
-    vim.api.nvim_win_set_cursor(state.plugin.chat_win, {
-      input_line + 1,
-      #cfg.chat_input_prefix,
-    })
+    -- Mark input start
+    state.start_input_mode(input_line)
+
+    -- Move cursor after prompt
+    if state.is_chat_win_valid() then
+      vim.api.nvim_win_set_cursor(state.plugin.chat_win, {
+        input_line + 1,
+        #cfg.chat_input_prefix,
+      })
+    end
   end
+
+  -- Reset the flag
+  state.plugin.last_prompt_was_sent = false
 
   -- Enter insert mode
   vim.cmd "startinsert!"
@@ -68,6 +100,9 @@ function M.process_user_input()
     return
   end
 
+  -- Mark that prompt was sent
+  state.plugin.last_prompt_was_sent = true
+
   -- Exit input mode
   state.end_input_mode()
 
@@ -83,10 +118,19 @@ end
 function M.cancel_input()
   if not state.plugin.is_in_input_mode or not state.plugin.input_start_line then return end
 
-  -- Remove input lines
-  vim.api.nvim_buf_set_lines(state.plugin.chat_buf, state.plugin.input_start_line - 1, -1, false, {})
+  -- Save current input before canceling
+  local current_line = vim.api.nvim_buf_line_count(state.plugin.chat_buf)
+  local input_lines =
+    vim.api.nvim_buf_get_lines(state.plugin.chat_buf, state.plugin.input_start_line, current_line + 1, false)
 
-  -- Reset state
+  -- Store the unsent prompt (removing the prefix from first line)
+  local cfg = config.get()
+  if #input_lines > 0 then
+    input_lines[1] = input_lines[1]:sub(#cfg.chat_input_prefix + 1)
+    state.plugin.unsent_prompt = table.concat(input_lines, "\n")
+  end
+
+  -- Reset state but keep the prompt visible
   state.end_input_mode()
 
   -- Make buffer non-editable
@@ -336,15 +380,11 @@ end
 
 -- Clear chat
 function M.clear_chat()
-  if state.is_chat_valid() then
-    vim.api.nvim_buf_set_option(state.plugin.chat_buf, "modifiable", true)
-    vim.api.nvim_buf_set_lines(state.plugin.chat_buf, 0, -1, false, {})
-    vim.api.nvim_buf_set_option(state.plugin.chat_buf, "modifiable", false)
-    state.clear_history()
-    state.set_code_blocks {}
-    state.end_input_mode()
-    utils.notify "💬 Chat and history cleared"
-  end
+  local state = require "utils.ailite_module.state"
+  local ui = require "utils.ailite_module.ui"
+  state.clear_history()
+  state.clear_sent_files() -- Limpa arquivos enviados
+  ui.clear_chat_window()
 end
 
 -- Close chat

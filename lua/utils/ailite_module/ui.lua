@@ -233,4 +233,14 @@ function M.remove_processing_indicator(buf)
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
 end
 
+-- Limpa o buffer do chat
+function M.clear_chat_window()
+  local state = require "utils.ailite_module.state"
+  if state.is_chat_valid() then
+    vim.api.nvim_buf_set_option(state.plugin.chat_buf, "modifiable", true)
+    vim.api.nvim_buf_set_lines(state.plugin.chat_buf, 0, -1, false, {})
+    vim.api.nvim_buf_set_option(state.plugin.chat_buf, "modifiable", false)
+  end
+end
+
 return M
