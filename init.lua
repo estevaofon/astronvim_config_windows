@@ -118,3 +118,159 @@ require("ailite").setup {
     max_tokens_per_message = 6000, -- ajuste o valor conforme necessário
   },
 }
+
+-- Configuração do módulo nox.lua
+-- O setup agora é simples - o highlighting real acontece via ftplugin/nox.lua
+require("utils.nox").setup()
+
+-- Opção 2: Se quiser configuração inline (copie o módulo aqui)
+-- local nox = {}
+-- [... código do módulo ...]
+-- nox.setup()
+
+-- Opção 3: Com lazy.nvim
+-- {
+--     dir = "~/.config/nvim/lua",
+--     name = "nox-syntax",
+--     config = function()
+--         require('nox').setup()
+--     end,
+--     ft = "nox"
+-- }
+
+-- Comando útil para testar - agora o highlighting deve ser automático
+vim.api.nvim_create_user_command("NoxTest", function()
+  -- Ativar debug temporariamente
+  local old_debug = vim.g.nox_debug
+  vim.g.nox_debug = true
+  
+  -- Criar um buffer de teste
+  local buf = vim.api.nvim_create_buf(true, false)
+  vim.api.nvim_set_current_buf(buf)
+
+  -- Código de exemplo
+  local test_code = {
+    "// HashMap (string -> int) com encadeamento separado",
+    "struct EntryS",
+    "    key: string,",
+    "    value: int,",
+    "    next: ref EntryS",
+    "end",
+    "",
+    "let CAPACITY: int = 16",
+    "let buckets: EntryS[16] = [null, null, null, null]",
+    "",
+    "func hash_str(s: string) -> int",
+    "    let h: int = 5381",
+    "    let i: int = 0",
+    "    while i < strlen(s) do",
+    "        let c: int = ord(s[i])",
+    "        h = h * 33 + c",
+    "        i = i + 1",
+    "    end",
+    "    if h < 0 then",
+    "        h = 0 - h",
+    "    end",
+    "    return h % CAPACITY",
+    "end",
+    "",
+    "func get_s(key: string) -> int",
+    "    let idx: int = hash_str(key)",
+    "    let cur: ref EntryS = buckets[idx]",
+    "    while cur != null do",
+    "        if str_eq(cur.key, key) then",
+    "            return cur.value",
+    "        end",
+    "        cur = cur.next",
+    "    end",
+    "    return -1",
+    "end",
+    "",
+    "// Demonstração",
+    'print("HashMap demo:")',
+    'put_s("one", 1)',
+    'print(to_str(get_s("one")))',
+  }
+
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, test_code)
+  
+  print("Definindo filetype como 'nox' para buffer " .. buf)
+  
+  -- Definir o tipo de arquivo (isso deve ativar automaticamente o highlighting)
+  vim.bo[buf].filetype = "nox"
+  
+  -- Aguardar um pouco e verificar se funcionou
+  vim.defer_fn(function()
+    local success, autocmds = pcall(vim.api.nvim_get_autocmds, { group = "NoxHighlight_" .. buf })
+    if success and autocmds and #autocmds > 0 then
+      print("✓ Highlighting automático funcionando!")
+    else
+      print("✗ Highlighting automático falhou, aplicando manualmente...")
+      require("utils.nox").attach(buf)
+    end
+    
+    -- Restaurar debug
+    vim.g.nox_debug = old_debug
+  end, 100)
+
+  print "Buffer de teste Nox criado!"
+end, {})
+
+-- Comando para debug do nox
+vim.api.nvim_create_user_command("NoxDebug", function()
+  vim.g.nox_debug = not vim.g.nox_debug
+  print("Nox debug: " .. (vim.g.nox_debug and "ON" or "OFF"))
+end, {})
+
+-- Comando para criar um arquivo .nx real para teste
+vim.api.nvim_create_user_command("NoxFile", function()
+  local filename = "test_" .. os.time() .. ".nx"
+  local test_code = [[// Arquivo de teste Nox
+struct Person
+    name: string,
+    age: int
+end
+
+func greet(p: ref Person) -> void
+    print("Hello, " + p.name)
+    print("You are " + to_str(p.age) + " years old")
+end
+
+let person: Person = {name: "João", age: 25}
+greet(person)]]
+
+  -- Criar o arquivo
+  local file = io.open(filename, "w")
+  if file then
+    file:write(test_code)
+    file:close()
+    vim.cmd("edit " .. filename)
+    
+    print("Arquivo " .. filename .. " criado e aberto!")
+  else
+    print("Erro ao criar arquivo!")
+  end
+end, {})
+
+-- Comando para verificar status do nox
+vim.api.nvim_create_user_command("NoxStatus", function()
+  local buf = vim.api.nvim_get_current_buf()
+  local filename = vim.api.nvim_buf_get_name(buf)
+  local ft = vim.bo.filetype
+  
+  print("=== Status do Nox ===")
+  print("Buffer: " .. buf)
+  print("Arquivo: " .. filename)
+  print("Filetype: '" .. ft .. "'")
+  print("É arquivo .nx: " .. (filename:match("%.nx$") and "SIM" or "NÃO"))
+  
+  -- Verificar se highlighting está aplicado
+  local success, autocmds = pcall(vim.api.nvim_get_autocmds, { group = "NoxHighlight_" .. buf })
+  print("Highlighting aplicado: " .. ((success and autocmds and #autocmds > 0) and "SIM" or "NÃO"))
+  
+  -- Forçar filetype se necessário
+  if filename:match("%.nx$") and ft ~= "nox" then
+    print("Definindo filetype como 'nox'...")
+    vim.bo.filetype = "nox"
+  end
+end, {})
