@@ -35,16 +35,6 @@ return {
     },
   },
   {
-    "github/copilot.vim",
-    -- overrides `require("mason-nvim-dap").setup(...)`
-    opts = {
-      ensure_installed = {
-        "python",
-        -- add more arguments for adding more debuggers
-      },
-    },
-  },
-  {
     "rmagatti/auto-session",
     lazy = false,
 
@@ -61,5 +51,9 @@ return {
   },
   {
     "estevaofon/ailite.nvim",
+  },
+  {
+    "estevaofon/nox.nvim",
+    ft = "nox", -- Lazy load on Nox files
   },
 }
