@@ -109,6 +109,8 @@ require("utils.python_path").setup()
 require("utils.debugger").setup()
 require("utils.my_utils").setup()
 require("utils.markdown-preview").setup()
+require("utils.path_utils").setup()
+require("utils.help_me").setup()
 
 -- require("ailite").setup {
 --   assistant_name = "AiLite",
