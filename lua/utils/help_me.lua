@@ -73,6 +73,7 @@ local sections = {
       { "<leader>be", "(visual) Codificar seleção em Base64" },
       { "<leader>bd", "(visual) Decodificar seleção Base64" },
       { "<leader>p", "(visual) Formatar JSON / dict Python" },
+      { "<leader>mp", "Preview de Markdown (markterm)" },
     },
   },
   {
