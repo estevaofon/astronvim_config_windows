@@ -27,6 +27,14 @@ function M.setup()
     })
   end, {})
 
+  -- Run fix_event_payload.py on the current file (`%` expands to it), then reload the buffer to
+  -- show the on-disk changes. Absolute path so it works from any project, regardless of cwd.
+  -- Forward slashes are fine on Windows and avoid backslash-escaping issues in the `:!` command.
+  vim.api.nvim_create_user_command("FixPayload", function()
+    vim.cmd "!python D:/OneDrive/Documentos/fix_event_payload.py %"
+    vim.cmd "edit"
+  end, { desc = "Run fix_event_payload.py on the current file and reload the buffer" })
+
   -- Set up key mappings
   vim.api.nvim_set_keymap("n", "<leader>w", ":InsertLambdaSnippet<CR>", { noremap = true, silent = true })
 

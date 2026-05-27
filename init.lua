@@ -32,24 +32,34 @@ end
 require "lazy_setup"
 require "polish"
 
+-- ── Sessão & swap (registrados aqui no init, que roda ANTES do VimEnter, p/ garantir o timing) ──
+-- Nunca deixar um swap file (.swp) travar a abertura de um arquivo (E325): abre "edit anyway".
+vim.api.nvim_create_autocmd("SwapExists", {
+  desc = "Abrir ignorando swap file (sem prompt E325)",
+  callback = function() vim.v.swapchoice = "e" end,
+})
+-- Restaura a última sessão (resession) ao abrir o nvim. Aceita abrir uma PASTA (ex.: `nvim .`);
+-- só pula quando você abre um ARQUIVO específico (`nvim x.py`). "Last Session" independe do cwd.
+local function _restore_last_session()
+  local n = vim.fn.argc(-1)
+  local should = n == 0 or (n == 1 and vim.fn.isdirectory(vim.fn.argv(0)) == 1)
+  if not should then return end
+  local ok, resession = pcall(require, "resession")
+  if ok then resession.load("Last Session", { silence_errors = true }) end
+end
+if vim.v.vim_did_enter == 1 then
+  _restore_last_session()
+else
+  vim.api.nvim_create_autocmd("VimEnter", { once = true, nested = true, callback = _restore_last_session })
+end
+
 -- vim.cmd.colorscheme "solarized"
 vim.cmd.colorscheme "catppuccin-mocha"
 -- vim.cmd.colorscheme "tokyonight-night"
 
--- Define a global config variable
-_G.my_pylsp_config = {
-  pylsp = {
-    plugins = {
-      pycodestyle = { ignore = { "E501", "E126", "E127", "W391", "W504" } },
-      pyflakes = { enabled = true }, -- initial state
-    },
-  },
-}
-
-local lspconfig = require "lspconfig"
-lspconfig.pylsp.setup {
-  settings = _G.my_pylsp_config,
-}
+-- pylsp is configured through AstroLSP (lua/plugins/astrolsp.lua) and installed via Mason
+-- (lua/plugins/mason.lua). `_G.my_pylsp_config` now lives in astrolsp.lua so `:TogglePyflakes`
+-- keeps working.
 
 -- require("persistent-breakpoints").setup {
 --   load_breakpoints_event = { "BufReadPost" },

@@ -9,6 +9,8 @@ return {
     opts = {
       ensure_installed = {
         "lua_ls",
+        -- NOTE: pylsp is intentionally NOT installed via Mason here -- its pypi install fails on
+        -- this machine. It runs from a dedicated venv configured in lua/plugins/astrolsp.lua.
         -- add more arguments for adding more language servers
       },
     },
@@ -34,18 +36,10 @@ return {
       },
     },
   },
-  {
-    "rmagatti/auto-session",
-    lazy = false,
-
-    ---enables autocomplete for opts
-    ---@module "auto-session"
-    ---@type AutoSession.Config
-    opts = {
-      suppressed_dirs = { "~/", "~/Projects", "~/Downloads", "/" },
-      -- log_level = 'debug',
-    },
-  },
+  -- auto-session foi REMOVIDO: o auto-save dele vivia congelando a sessão (ficava presa numa
+  -- versão antiga) e ainda brigava com o resession nativo do AstroNvim. As sessões agora são
+  -- 100% do resession: ele salva o dirsession ao sair, e restauramos no boot via autocmd
+  -- (restore_dir_session) em lua/plugins/astrocore.lua.
   {
     "tpope/vim-fugitive",
   },

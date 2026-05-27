@@ -38,6 +38,7 @@ local sections = {
       { "<F3>", "Próximo buffer (:bn)" },
       { "<leader>bd", "Fechar buffer atual" },
       { "<leader>ba", "Fechar todos os buffers e alternar Neotree" },
+      { "H", "Mostrar/ocultar arquivos OCULTOS no Neo-tree (Shift+h)" },
     },
   },
   {
@@ -52,15 +53,27 @@ local sections = {
   {
     title = "DEBUG (DAP)",
     items = {
+      { "<F5>", "Iniciar / continuar o debug" },
       { "<F9>", "Toggle breakpoint" },
       { "<F12>", "Step into" },
       { "<F2>", "Step out" },
+      { "<F10>", "Step over (executa a linha sem entrar nas funções)" },
       { "<F6>", "Parar o debug" },
       { "<F4>", "Hover: valor sob o cursor" },
       { "<F1>", "Avaliar expressão (dapui)" },
       { "<F8>", "Copiar valor da variável p/ novo buffer" },
       { "<leader>cb", "Limpar todos os breakpoints (:ClearBreakpoints)" },
       { "<leader>dq", "Voltar ao arquivo onde o debug começou" },
+    },
+  },
+  {
+    title = "COMENTAR  (linha / bloco)",
+    items = {
+      { "gcc", "Comentar / descomentar a LINHA atual" },
+      { "gc + movimento", "Comentar por motion  (ex.: gc3j = 3 linhas)" },
+      { "gc  (visual)", "Comentar / descomentar a SELEÇÃO" },
+      { "<leader>/", "Toggle comentário (linha em normal, seleção em visual)" },
+      { "gbc / gb", "Comentário em bloco  (/* ... */)" },
     },
   },
   {
@@ -85,6 +98,7 @@ local sections = {
       { ":LiteralSearch", "Busca literal (sem regex)" },
       { ":SearchReplace", "Buscar e substituir no arquivo" },
       { ":InsertLambdaSnippet", "Inserir snippet de Lambda" },
+      { ":FixPayload", "Roda o fix_event_payload.py no arquivo atual (e recarrega)" },
       { ":MarkdownPreview", "Pré-visualizar Markdown" },
       { ":NoxHighlight / :NoxRefresh", "Realce da linguagem Nox" },
     },

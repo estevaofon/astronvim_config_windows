@@ -75,7 +75,7 @@ function M.setup()
       type = "python",
       request = "launch",
       program = "${file}", -- This runs the current file directly
-      justMyCode = false,
+      justMyCode = false, -- step into all code; the empty-buffer/E325 errors were stale swap files (duplicate nvim instances), not this
       pythonPath = get_local_debugpy,
     },
     {

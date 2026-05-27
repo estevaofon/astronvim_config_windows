@@ -66,5 +66,6 @@ return {
         -- ["<C-S>"] = false,
       },
     },
+    -- (sessão e swap agora são tratados por autocmds em init.lua, registrados antes do VimEnter)
   },
 }

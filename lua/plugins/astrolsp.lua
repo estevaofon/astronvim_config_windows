@@ -1,9 +1,19 @@
-if true then return {} end -- WARN: REMOVE THIS LINE TO ACTIVATE THIS FILE
-
 -- AstroLSP allows you to customize the features in AstroNvim's LSP configuration engine
 -- Configuration documentation can be found with `:h astrolsp`
 -- NOTE: We highly recommend setting up the Lua Language Server (`:LspInstall lua_ls`)
 --       as this provides autocomplete and documentation while editing
+
+-- Global pylsp settings table. Defined here (before lazy builds the plugin specs) so it can be
+-- passed by reference into `opts.config.pylsp.settings` below and ALSO mutated at runtime by
+-- `:TogglePyflakes` (lua/utils/my_utils.lua), which flips `pyflakes.enabled` and runs `:LspRestart`.
+_G.my_pylsp_config = {
+  pylsp = {
+    plugins = {
+      pycodestyle = { ignore = { "E501", "E126", "E127", "W391", "W504" } },
+      pyflakes = { enabled = true }, -- initial state
+    },
+  },
+}
 
 ---@type LazySpec
 return {
@@ -45,6 +55,14 @@ return {
     ---@diagnostic disable: missing-fields
     config = {
       -- clangd = { capabilities = { offsetEncoding = "utf-8" } },
+      -- pylsp runs from a dedicated venv created with the system Python (stdpath("data")/pylsp-venv),
+      -- because Mason's pypi install kept failing on this Windows machine (locked dir / broken venv
+      -- with no pyvenv.cfg). `settings` is the same table mutated by `:TogglePyflakes`, passed by
+      -- reference so a `:LspRestart` picks up runtime changes to `pyflakes.enabled`.
+      pylsp = {
+        cmd = { vim.fn.stdpath "data" .. "/pylsp-venv/Scripts/pylsp.exe" },
+        settings = _G.my_pylsp_config,
+      },
     },
     -- customize how language servers are attached
     handlers = {
