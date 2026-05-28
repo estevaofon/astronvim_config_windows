@@ -42,12 +42,26 @@ local sections = {
     },
   },
   {
-    title = "CÓDIGO (LSP & Git)",
+    title = "CÓDIGO (LSP)",
     items = {
       { "gd", "Ir para a definição" },
       { "gD", "Ir para a declaração" },
-      { "<leader>gp", "Preview do hunk do Git (GitSigns)" },
       { "<C-l> / <C-d>", "Aceitar sugestão do Copilot (modo insert)" },
+    },
+  },
+  {
+    title = "GIT  (vim-fugitive)",
+    items = {
+      { ":Git  /  :G", "Painel de status do Git (s=add  u=unstage  cc=commit)" },
+      { ":Git blame", "Ver quem alterou cada linha (o=abrir commit, q=fechar)" },
+      { ":Git commit", "Commit do que está em stage" },
+      { ":Git push", "Enviar commits para o remoto (push)" },
+      { ":Git pull", "Trazer mudanças do remoto (pull)" },
+      { ":Gdiffsplit", "Diff do arquivo vs. HEAD (split lado a lado)" },
+      { ":Gwrite", "git add do arquivo atual (stage)" },
+      { ":Gread", "Descartar mudanças do arquivo (git checkout --)" },
+      { ":Gclog", "Histórico de commits do arquivo (quickfix)" },
+      { "<leader>gp", "Preview do hunk alterado (GitSigns)" },
     },
   },
   {
