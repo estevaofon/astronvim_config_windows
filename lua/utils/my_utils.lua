@@ -35,16 +35,17 @@ function M.setup()
     vim.cmd "edit"
   end, { desc = "Run fix_event_payload.py on the current file and reload the buffer" })
 
-  -- Launch doomgeneric (wincon build) in a separate Windows console window. It uses the Windows
-  -- Console API for input (arrows, ctrl-to-shoot), which does not survive nvim's pty, so it must
-  -- run in a real external console. The empty "" is start's title arg.
+  -- Launch the stdin/ANSI build of doomgeneric inside an nvim terminal tab. The exe lives in
+  -- Release_Term but the wad is in Release_WinCon, so we set cwd there and run the exe by
+  -- absolute path. The term build reads stdin (escape sequences) instead of the Windows Console
+  -- input API, so movement and shooting work through nvim's pty.
   vim.api.nvim_create_user_command("Playdoom", function()
-    local doom_dir = "D:\\OneDrive\\Documentos\\doomgeneric\\doomgeneric\\x64\\Release_WinCon"
-    vim.fn.jobstart(
-      { "cmd.exe", "/c", "start", "", "/D", doom_dir, "doomgeneric_wincon.exe", "-iwad", "doom1.wad" },
-      { detach = true }
-    )
-  end, { desc = "Launch doomgeneric (wincon) with doom1.wad in an external console" })
+    local exe = "D:\\OneDrive\\Documentos\\doomgeneric\\doomgeneric\\x64\\Release_Term\\doomgeneric_term.exe"
+    local wad_dir = "D:\\OneDrive\\Documentos\\doomgeneric\\doomgeneric\\x64\\Release_WinCon"
+    vim.cmd "tabnew"
+    vim.fn.termopen({ exe, "-iwad", "doom1.wad" }, { cwd = wad_dir })
+    vim.cmd "startinsert"
+  end, { desc = "Launch doomgeneric (term build) inside an nvim terminal tab" })
 
   -- Set up key mappings
   vim.api.nvim_set_keymap("n", "<leader>w", ":InsertLambdaSnippet<CR>", { noremap = true, silent = true })
